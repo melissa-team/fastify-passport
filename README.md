@@ -18,31 +18,31 @@ npm install fastify-passport
 ## Example
 
 ```js
-import fastifyPassport from "fastify-passport";
-import fastifySecureSession from "fastify-secure-session";
+import fastifyPassport from 'fastify-passport'
+import fastifySecureSession from 'fastify-secure-session'
 
-const server = fastify();
+const server = fastify()
 // set up secure sessions for fastify-passport to store data in
-server.register(fastifySecureSession, { key: fs.readFileSync(path.join(__dirname, "secret-key")) });
+server.register(fastifySecureSession, { key: fs.readFileSync(path.join(__dirname, 'secret-key')) })
 // initialize fastify-passport and connect it to the secure-session storage. Note: both of these plugins are mandatory.
-server.register(fastifyPassport.initialize());
-server.register(fastifyPassport.secureSession());
+server.register(fastifyPassport.initialize())
+server.register(fastifyPassport.secureSession())
 
 // Add an authentication for a route which will use the strategy named "test" to protect the route
 server.get(
-  "/",
-  { preValidation: fastifyPassport.authenticate("test", { authInfo: false }) },
-  async () => "hello world!"
-);
+  '/',
+  { preValidation: fastifyPassport.authenticate('test', { authInfo: false }) },
+  async () => 'hello world!'
+)
 
 // Add an authentication for a route which will use the strategy named "test" to protect the route, and redirect on success to a particular other route.
 server.post(
-  "/login",
-  { preValidation: fastifyPassport.authenticate("test", { successRedirect: "/", authInfo: false }) },
+  '/login',
+  { preValidation: fastifyPassport.authenticate('test', { successRedirect: '/', authInfo: false }) },
   () => {}
-);
+)
 
-server.listen(0);
+server.listen(0)
 ```
 
 ## API
@@ -79,19 +79,21 @@ Options:
 - `assignProperty` Assign the object provided by the verify callback to given property
 
 An optional `callback` can be supplied to allow the application to override the default manner in which authentication attempts are handled. The callback has the following signature:
+
 ```js
 (request, reply, err | null, user | false, info?, (status | statuses)?) => Promise<void>
 ```
- where `request` and `reply` will be set to the original `FastifyRequest` and `FastifyReply` objects, and `err` will be set to `null` in case of a success or an `Error` object in case of a failure. If `err` is not `null` then `user`, `info` and `status` objects will be `undefined`. The `user` object will be set to the authenticated user on a successful authentication attempt, or `false` otherwise.
 
- An optional `info` argument will be passed, containing additional details provided by the strategy's verify callback - this could be information about a successful authentication or a challenge message for a failed authentication.
+where `request` and `reply` will be set to the original `FastifyRequest` and `FastifyReply` objects, and `err` will be set to `null` in case of a success or an `Error` object in case of a failure. If `err` is not `null` then `user`, `info` and `status` objects will be `undefined`. The `user` object will be set to the authenticated user on a successful authentication attempt, or `false` otherwise.
+
+An optional `info` argument will be passed, containing additional details provided by the strategy's verify callback - this could be information about a successful authentication or a challenge message for a failed authentication.
 
 An optional `status` or `statuses` argument will be passed when authentication fails - this could be a HTTP response code for a remote authentication failure or similar.
 
 ```js
 fastify.get(
-  "/",
-  { preValidation: fastifyPassport.authenticate("test", { authInfo: false }) },
+  '/',
+  { preValidation: fastifyPassport.authenticate('test', { authInfo: false }) },
   async (request, reply, err, user, info, status) => {
     if (err !== null) {
       console.warn(err)
@@ -99,7 +101,7 @@ fastify.get(
       console.log(`Hello ${user.name}!`)
     }
   }
-);
+)
 ```
 
 Examples:
@@ -119,7 +121,7 @@ This function is particularly useful when connecting third-party accounts to the
 Examples:
 
 ```js
-fastifyPassport.authorize("twitter-authz", { failureRedirect: "/account" });
+fastifyPassport.authorize('twitter-authz', { failureRedirect: '/account' })
 ```
 
 ### use([name], strategy)
@@ -145,12 +147,36 @@ However, in certain situations, applications may need dynamically configure and 
 Example:
 
 ```js
-fastifyPassport.unuse("legacy-api");
+fastifyPassport.unuse('legacy-api')
 ```
 
 ### Request#isUnauthenticated()
 
 Test if request is unauthenticated.
+
+## Using with TypeScript
+
+`fastify-passport` is written in TypeScript, so it includes type definitions for all of it's API. You can also strongly type the `FastifyRequest.user` property using TypeScript declaration merging. You must re-declare the `PassportUser` interface in the `fastify` module within your own code to add the properties you expect to be assigned by the strategy when authenticating:
+
+```typescript
+declare module 'fastify' {
+  interface PassportUser {
+    id: string
+  }
+}
+```
+
+or, if you already have a type for the objects returned from all of the strategies, you can map it onto the interface with a mapped index type:
+
+```typescript
+import { User } from './my/types'
+
+declare module 'fastify' {
+  interface PassportUser {
+   [Key in keyof User]: User[Key]
+  }
+}
+```
 
 # Differences from Passport.js
 
@@ -165,3 +191,7 @@ Differences:
 ## License
 
 [MIT](./LICENSE)
+
+```
+
+```
